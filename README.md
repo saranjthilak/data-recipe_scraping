@@ -1,72 +1,154 @@
-Web scraping is the last solution one needs to use to automate data retrieval (i.e. when there is _no API_ available). This technique is used by Google to build its index for the famous search engine. The Google bot performing this action is called a [crawler](https://www.google.com/search/howsearchworks/crawling-indexing/).
+# Data Recipe Scraping 🍲
 
-In the Python world, scraping means importing. [`BeautifulSoup`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) is a library used to pull data out of HTML.
+A Python utility to scrape recipes from cooking websites and build a clean, structured dataset for analysis or cooking applications.
 
-## Example
+---
 
-We are going to scrape the Recipe directory [recipes.lewagon.com](https://recipes.lewagon.com/)
+## 🔍 Why Web Scraping?
 
-Open the `test_scraping.py` file in a text editor and paste the following code:
+Web scraping is the **last resort** one should use to automate data retrieval — only when **no public API is available**.
+
+Even Google uses web scraping to build its search engine index. The process is performed by a **crawler**, like Googlebot.
+
+In Python, web scraping often means parsing HTML files to extract specific data. The most common tool for this is **BeautifulSoup**.
+
+---
+
+## 📘 Quick Start Example: Offline Scraping
+
+We’ll demonstrate scraping using a static HTML file (offline scraping), to avoid spamming the website.
+
+### `test_scraping.py`
 
 ```python
 from bs4 import BeautifulSoup
 
 soup = BeautifulSoup(open("pages/carrot.html"), "html.parser")
 
-for recipe in soup.find_all('p', class_= 'recipe-name'):
+for recipe in soup.find_all('p', class_='recipe-name'):
     print(recipe.text)
 ```
 
-In your terminal, run:
+### Terminal
 
 ```bash
 python test_scraping.py
 ```
 
-💣 OK, you got an error. Can you read it? What are you missing?
+💣 You’ll likely get an error the first time. Read the message — what file is missing?
 
-What we want to do here is called **offline scraping**. While developing the scraper, we don't want to send HTTP requests to the server every time we run the code, taking the risk of spamming the site and being _banned_ from it.
-
-Let's download the search results for the keyword `carrot`:
+Download the HTML manually:
 
 ```bash
 curl -g "https://recipes.lewagon.com/?search[query]=carrot" > pages/carrot.html
 ```
 
-Now, run the Python script once again:
+Now re-run:
 
 ```bash
 python test_scraping.py
 ```
 
-✨ Congrats! You've just scraped your first page.
+✨ Congrats! You’ve just scraped your first page.
 
-## Challenge
+---
 
-The goal of this challenge is to write a Python script that will parse the first 36 recipes for a given keyword and store them in the `recipes` folder. It should work like this:
+## 🧪 Challenge: Scrape Recipes by Keyword
+
+The goal is to scrape the first **36 recipes** for a keyword (e.g. "chocolate") and store them in a CSV file.
 
 ```bash
 python recipe.py chocolate
 
-ls -lh recipes
+ls -lh recipes/
 # -rw-r--r--  12K  chocolate.csv
 
 head -n 3 recipes/chocolate.csv
-
 # name,difficulty,prep_time
 # Ultimate chocolate cake,Easy,2 hours 10 mins
 # Best ever chocolate brownies recipe,More effort,1 hour
 ```
 
-To get to this final result, there are a few functions to implement in `recipe.py`
+---
 
-- `parse_recipe(article)`: this function takes the content of the `<div />` of a given recipe and retrieves the recipe's name, difficulty level, and preparation time. It returns a `dict` containing 3 keys {`name`, `difficulty`, `prep_time`}
-- `parse(html)`: this is the most important function. It looks for all the `<div />` elements that represent a recipe and uses the `parse_recipe(article)` function on each recipe to retrieve the name, difficulty and prep_time. It should return a `list` of `dict`.
-- `write_csv(ingredient, recipes)`: this function takes two parameters. The first one is a `str`, the second one a `list` of `dict`. It will create a CSV file `{ingredient}.csv` and store the recipes from the list in the `recipes` directory.
-- `scrape_from_internet(ingredient, start)`: this function will work on the website and search for the given `ingredient`. Ignore the `start` parameter, to begin with. It should return the HTML from the page (to be fed to the `parse` method).
-- `main()` Update the function so that `scrape_from_internet` is called instead of `scrape_from_file`. Run a few tests like `python recipe.py chocolate` or `python recipe.py strawberry`. After each run, check the `recipes` folder and open the created CSV file. Does it look OK to you?
-- `main()` with **pagination**: you now need to update the `main` and the `scrape_from_internet` functions so that the program does not stop at the first page of search results but downloads the first 3 pages of recipes if available!
+## 🧩 Required Functions in `recipe.py`
 
-💡 **Hint**: Check-out [`requests.Response.history`](https://requests.readthedocs.io/en/latest/api/#requests.Response.history). How might you use this to stop your scrape early if there aren't 3 pages?
+### ✅ `parse_recipe(article)`
 
-🙌 Have fun scraping!
+- Input: One recipe's `<div>`
+- Output: Dictionary with `name`, `difficulty`, `prep_time`
+
+### ✅ `parse(html)`
+
+- Input: Whole HTML page
+- Output: List of recipe dicts using `parse_recipe`
+
+### ✅ `write_csv(ingredient, recipes)`
+
+- Input: Ingredient (str), List of recipe dicts
+- Output: Creates `recipes/{ingredient}.csv`
+
+### ✅ `scrape_from_internet(ingredient, start)`
+
+- Input: Ingredient, start page
+- Output: HTML of search results page
+
+---
+
+## 🧠 Main Flow
+
+Update your `main()` in `recipe.py` to:
+
+1. Call `scrape_from_internet`
+2. Parse the result
+3. Save to CSV
+4. Repeat for next pages
+
+---
+
+## 🌀 Bonus: Pagination Support
+
+Update `main()` and `scrape_from_internet()` to scrape up to the **first 3 pages**, if available.
+
+💡 Tip: Use `requests.Response.history` to check if you're being redirected (e.g., no results or max page).
+
+---
+
+## 📂 Project Structure
+
+```
+.
+├── pages/
+│   └── carrot.html
+├── recipes/
+│   └── chocolate.csv
+├── recipe.py
+├── test_scraping.py
+└── README.md
+```
+
+---
+
+## 🛠 Dependencies
+
+- `beautifulsoup4`
+- `requests`
+- `csv`
+- `os`
+
+Install with:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🙌 Have Fun Scraping!
+
+This project is ideal for learning:
+
+- HTML parsing
+- Offline-first scraping
+- Respectful, ethical web scraping
+- Real-world data pipeline creation
